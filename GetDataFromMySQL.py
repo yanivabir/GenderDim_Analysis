@@ -6,8 +6,8 @@ import pickle, gzip
 from numpy import mean
 
 exp_fld = '/Users/yanivabir/Google Drive/Lab/GenderDim'
-usePickle = 1
-min_date = datetime(2018,6,21, 0, 0)
+usePickle = 0
+min_date = datetime(2018,6,23, 0, 0)
 
 # Data base config
 db_url = "mysql://greenlab:11cookies11@brms.c1lkfpz6aowj.us-east-2.rds.amazonaws.com:3306/brmsdb"
@@ -21,7 +21,7 @@ table = Table(table_name, metadata, autoload=True)
 s = table.select()
 
 if not usePickle:
-    q = s.where(~table.c.uniqueid.contains('debug'))
+    q = s.where(~table.c.uniqueid.contains('debug')).where(table.c.beginhit > min_date)
     rows = q.execute()
 
     data = []
@@ -31,6 +31,7 @@ if not usePickle:
         data.append(row[data_column_name])
         print row['uniqueid']
         print row['beginhit']
+        print row['cond']
 
     data = data
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server','wb')
@@ -50,6 +51,7 @@ else:
         data.append(row[data_column_name])
         print row['uniqueid']
         print row['beginhit']
+        print row['cond']
 
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server', 'wb')
     pickle.dump(data, f)
@@ -77,14 +79,13 @@ for part in data:
     counter = 1
     animation.append([])
     for i in range(1, len(part['data'])):
-        if part['data'][i]['internal_node_id'] == '0.0-25.0' and acc:
+        if part['data'][i]['internal_node_id'] == '0.0-27.0' and acc:
             complete_subject.append({'uniqueid': part['uniqueid'], 'acc': round(mean(acc), 2)})
         if part['data'][i]['trial_type'] in trialTypes:
             part['data'][i]['uniqueid'] = part['uniqueid']
             part['data'][i]['Subject'] = data.index(part) + 1
             part['data'][i]['Trial'] = counter
             if 'animation_performance' in part['data'][i]:
-                print('got here')
                 animation[data.index(part)].append({'Subject': data.index(part) + 1,
                                             'uniqueid': part['uniqueid'],
                                             'Trial': counter,
