@@ -5,7 +5,7 @@ library(rjson)
 
 # Open data ----
 setwd('/Users/yanivabir/Google Drive/Lab/GenderDim/GenderDim_Analysis')
-dataFrom <- '20180623'
+dataFrom <- '20180624'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
 event <- fread(paste('../Data/', dataFrom, 'eventdata.csv', sep= ''))
@@ -16,6 +16,8 @@ jsevent <- fread(paste('../Data/', dataFrom, 'jseventdata.csv', sep= ''))
 
 # Prepare data ----
 brms$uniqueid <- factor(brms$uniqueid)
+brms[, stim_gender := factor(substring(stimulus, 18,18))]
+summary(brms)
 
 # Discard training trials
 brms <- brms[!(is.na(trial))]
@@ -46,13 +48,31 @@ dems <- dems[, .(age = as.numeric(fromJSON(responses[internal_node_id == '0.0-10
                  strategy = fromJSON(responses[internal_node_id == '0.0-13.0'])$Q0,
                  sexuality = fromJSON(responses[internal_node_id == '0.0-14.0'])$Q0,
                  attracted = fromJSON(responses[internal_node_id == '0.0-14.0'])$Q1,
-                 driver = fromJSON(responses[internal_node_id == '0.0-24.0'])$Q0), 
+                 driver = fromJSON(responses[internal_node_id == '0.0-24.0'])$Q0,
+                 driving_ability_text = responses[internal_node_id == '0.0-25.0-0.0'],
+                 accidents_driver_text = responses[internal_node_id == '0.0-25.0-1.0'],
+                 accidents_pedestrian = as.numeric(fromJSON(responses[internal_node_id == '0.0-26.0'])$Q0),
+                 politics_death_penalty = fromJSON(responses[question == 'Death penalty'])$Q0,
+                 politics_environment = fromJSON(responses[question == 'Environment laws'])$Q0,
+                 politics_iraq = fromJSON(responses[question == 'Iraq'])$Q0,
+                 politics_gays = fromJSON(responses[question == 'Homosexuals'])$Q0,
+                 politics_guns = fromJSON(responses[question == 'Gun control'])$Q0,
+                 politics_stemcelss = fromJSON(responses[question == 'Stem Cell'])$Q0,
+                 politics_abortion = fromJSON(responses[question == 'Abortion'])$Q0,
+                 politics_affirmative_action = fromJSON(responses[question == 'Affirmative action'])$Q0), 
              by = .(uniqueid)]
+dems[!(is.na(driving_ability_text)), c('driving_ability', 'accidents_driver') := 
+       list(as.numeric(fromJSON(driving_ability_text)), as.numeric(fromJSON(accidents_driver_text))), 
+     by = uniqueid]
 
+dems$uniqueid <- factor(dems$uniqueid)
+dems$hand <- factor(dems$hand)
+dems$driver <- factor(dems$driver)
 dems$gender <- factor(dems$gender)
 dems$native <- factor(dems$native)
 dems$sexuality <- factor(dems$sexuality)
 dems$attracted <- factor(dems$attracted)
+summary(dems)
 
 ggplot(dems, aes(x = age)) +
   geom_histogram(bins = 15)
@@ -104,3 +124,5 @@ ggplot(mBT[, .(BT = mean(BT),
   geom_pointrange()
 
 t.test(BT ~ gender, mBT)
+
+

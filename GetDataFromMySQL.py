@@ -7,7 +7,7 @@ from numpy import mean
 
 exp_fld = '/Users/yanivabir/Google Drive/Lab/GenderDim'
 usePickle = 0
-min_date = datetime(2018,6,23, 0, 0)
+min_date = datetime(2018,6,24, 19, 0)
 
 # Data base config
 db_url = "mysql://greenlab:11cookies11@brms.c1lkfpz6aowj.us-east-2.rds.amazonaws.com:3306/brmsdb"
