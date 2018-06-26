@@ -2,6 +2,7 @@ library(data.table)
 library(ggplot2)
 theme_set(theme_bw())
 library(rjson)
+library(ez)
 
 # Open data ----
 setwd('/Users/yanivabir/Google Drive/Lab/GenderDim/GenderDim_Analysis')
@@ -10,8 +11,6 @@ brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
 event <- fread(paste('../Data/', dataFrom, 'eventdata.csv', sep= ''))
 jsevent <- fread(paste('../Data/', dataFrom, 'jseventdata.csv', sep= ''))
-
-
 
 
 # Prepare data ----
@@ -77,6 +76,43 @@ summary(dems)
 ggplot(dems, aes(x = age)) +
   geom_histogram(bins = 15)
 
+# Exclude by event data ----
+# Look at focus loss
+ps_focus <- subset(event, eventtype == 'focus' & uniqueid %in% brms$uniqueid)
+
+# Recorded by psiturk
+for (ii in 1:(nrow(ps_focus) - 1)){
+  if (with(ps_focus, value[ii] == 'off')){
+    if (with(ps_focus, value[ii + 1] == 'on' && uniqueid[ii] == uniqueid[ii+1])) {
+      brms[uniqueid == ps_focus$uniqueid[ii] & trial_began >= ps_focus$timestamp[ii] & 
+             trial_began + rt <= ps_focus$timestamp[ii+1],'ps_focus_problem'] <- T
+    }else{
+      brms[uniqueid == ps_focus$uniqueid[ii] & 
+             trial_began >= ps_focus$timestamp[ii],'ps_focus_problem'] <- T
+    }
+  }
+}
+
+# Recorded by jsPsych
+js_focus <- subset(jsevent, event == 'focus' | event == 'blur')
+for (ii in 1:(nrow(js_focus) - 1)){
+  if (with(js_focus, event[ii] == 'blur')){
+    if (with(js_focus, event[ii + 1] == 'focus' && uniqueid[ii] == uniqueid[ii+1])) {
+      brms[uniqueid == js_focus$uniqueid[ii] & trial_index >= js_focus$trial[ii] & 
+             trial_index <= js_focus$trial[ii+1],'js_focus_problem'] <- T
+    }else{
+      brms[uniqueid == js_focus$uniqueid[ii] & 
+             trial_index >= js_focus$trial[ii],'js_focus_problem'] <- T
+    }
+  }
+}
+
+brms[is.na(brms$js_focus_problem), 'js_focus_problem'] <- F
+brms[is.na(brms$ps_focus_problem), 'ps_focus_problem'] <- F
+
+# Remove trials
+brms <- brms[!js_focus_problem & !ps_focus_problem]
+
 # Clean brms data ----
 # Keep only trials with good animation
 brms <- brms[bProblem == 0 & sProblem < 5]
@@ -84,6 +120,11 @@ brms <- brms[bProblem == 0 & sProblem < 5]
 trialCount <- brms[, .(trials = .N), by = uniqueid]
 trialCount <- trialCount[trials >= 160]
 brms <- brms[uniqueid %in% trialCount$uniqueid]
+
+# Accuracy per subject
+Acc <- brms[, .(acc = mean(acc)), by = uniqueid]
+Acc <- Acc[acc >= .9]
+brms <- brms[uniqueid %in% Acc$uniqueid]
 
 # Keep only correct trials
 brms <- brms[acc == 1]
@@ -94,22 +135,32 @@ brms <- brms[rt > 200]
 # Exclude long trials
 brms <- brms[rt < 15000]
 
-ggplot(brms, aes(x = rt)) +
-  geom_histogram(bins = 50) +
-  facet_wrap('uniqueid', scales = 'free_x')
+# ggplot(brms, aes(x = rt)) +
+#   geom_histogram(bins = 50) +
+#   facet_wrap('uniqueid', scales = 'free_x')
 
 # Exclude outlier trials per subject
 brms[, zrt := scale(rt), by = uniqueid]
 brms <- brms[abs(zrt) < 3]
 
-ggplot(brms, aes(x = rt)) +
-  geom_histogram(bins = 50) +
-  facet_wrap('uniqueid', scales = 'free_x')
+# ggplot(brms, aes(x = rt)) +
+#   geom_histogram(bins = 50) +
+#   facet_wrap('uniqueid', scales = 'free_x')
 
 # Plot BTs ----
-mBT <- brms[, .(BT = mean(rt)), by = uniqueid]
+mBT <- brms[, .(BT = mean(rt)), by = .(uniqueid, stim_gender)]
 ggplot(mBT, aes(x = BT)) +
   geom_histogram(bins = 15)
+
+# Remove outlier subjects
+mBT[, ZBT := scale(BT)]
+# mBT <- mBT[abs(ZBT) < 3]
+mBT <- mBT[BT <= (quantile(BT, 0.75) + 1.5 * IQR(BT) & BT) >= (quantile(BT, 0.25) - 1.5 * IQR(BT))]
+brms <- brms[uniqueid %in% mBT$uniqueid]
+
+ggplot(mBT, aes(x = BT)) +
+  geom_histogram(bins = 15)
+
 
 mBT <- merge(mBT, dems)
 
@@ -118,11 +169,28 @@ ggplot(mBT, aes(x = age, y = BT)) +
 
 cor.test(mBT$BT, mBT$age)
 
-ggplot(mBT[, .(BT = mean(BT),
-               se = sd(BT) / sqrt(.N)), 
-           by = gender], aes(x = gender, y = BT, ymin = BT - se, ymax = BT + se)) +
-  geom_pointrange()
+ggplot(mBT, aes(x = gender, y = BT)) +
+  geom_point()
 
-t.test(BT ~ gender, mBT)
+t.test(BT ~ gender, mBT[!(gender == 'Other')])
+t.test(BT ~ stim_gender, mBT)
+
+# Factorial ANOVA
+mod <- ezANOVA(mBT,
+               dv = BT,
+               wid = uniqueid,
+               between = .(gender, stim_gender),
+               type = 3)
+print(mod)
+
+mBT[, stim_gender := ifelse(stim_gender == 'f', 'Female', 'Male')]
+ggplot(mBT[, .(BT = mean(BT),
+              se = sd(BT) / sqrt(.N)), by = .(stim_gender, gender)], 
+       aes(x = stim_gender, y = BT, color = gender, ymin = BT - se, ymax = BT + se)) +
+  geom_pointrange() + ylab('BT (ms)') + xlab('Face gender') +
+  guides(color=guide_legend(title="Gender"))
+
+# Trial over stimuli ----
+tPerStim <- brms[, .(trials = .N), by = stimulus]
 
 
