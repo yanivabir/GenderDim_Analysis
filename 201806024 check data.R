@@ -159,13 +159,15 @@ mBT <- mBT[BT <= (quantile(BT, 0.75) + 1.5 * IQR(BT) & BT) >= (quantile(BT, 0.25
 brms <- brms[uniqueid %in% mBT$uniqueid]
 
 ggplot(mBT, aes(x = BT)) +
-  geom_histogram(bins = 15)
+  geom_histogram(bins = 15) +
+  xlab('BT (ms)') + ylab('# of Ps') + theme(text = element_text(size=20))
 
 
 mBT <- merge(mBT, dems)
 
 ggplot(mBT, aes(x = age, y = BT)) +
-  geom_point()
+  geom_smooth(method = 'lm', se = F) +
+  geom_point() + ylab('BT (ms)') + xlab('Age') + theme(text = element_text(size=20))
 
 cor.test(mBT$BT, mBT$age)
 
@@ -188,7 +190,7 @@ ggplot(mBT[, .(BT = mean(BT),
               se = sd(BT) / sqrt(.N)), by = .(stim_gender, gender)], 
        aes(x = stim_gender, y = BT, color = gender, ymin = BT - se, ymax = BT + se)) +
   geom_pointrange() + ylab('BT (ms)') + xlab('Face gender') +
-  guides(color=guide_legend(title="Gender"))
+  guides(color=guide_legend(title="Gender")) + theme(text = element_text(size=20))
 
 # Trial over stimuli ----
 tPerStim <- brms[, .(trials = .N), by = stimulus]
