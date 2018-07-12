@@ -7,7 +7,7 @@ from numpy import mean
 
 exp_fld = '/Users/yanivabir/Google Drive/Lab/GenderDim'
 usePickle = 0
-min_date = datetime(2018,6,24, 19, 0)
+min_date = datetime(2018,7,10, 19, 0) #datetime(2018,6,24, 19, 0)
 
 # Data base config
 db_url = "mysql://greenlab:11cookies11@brms.c1lkfpz6aowj.us-east-2.rds.amazonaws.com:3306/brmsdb"
@@ -73,6 +73,7 @@ trialTypes = ['bRMS']
 brmsFieldnames = set()
 brms = []
 complete_subject = []
+reject_subject = []
 animation = []
 for part in data:
     acc = []
@@ -81,6 +82,10 @@ for part in data:
     for i in range(1, len(part['data'])):
         if part['data'][i]['internal_node_id'] == '0.0-27.0' and acc:
             complete_subject.append({'uniqueid': part['uniqueid'], 'acc': round(mean(acc), 2)})
+        if part['data'][i]['internal_node_id'] == '0.0-6.2-2.2-0.2' or \
+                part['data'][i]['internal_node_id'] == '0.0-1.0-0.0':
+            print(part['data'][i]['stimulus'])
+            reject_subject.append({'uniqueid': part['uniqueid'], 'reason': part['data'][i]['internal_node_id']})
         if part['data'][i]['trial_type'] in trialTypes:
             part['data'][i]['uniqueid'] = part['uniqueid']
             part['data'][i]['Subject'] = data.index(part) + 1
@@ -189,4 +194,24 @@ with gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'animation_dat
     writer.writeheader()
 
     for record in animationf:
+        writer.writerow(record)
+
+
+# Save subject approves and rejects to file
+fields = set()
+for record in reject_subject:
+    fields.update(set(record.keys()))
+with open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'reject_subjects.csv', 'wb') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=fields)
+    writer.writeheader()
+    for record in reject_subject:
+        writer.writerow(record)
+
+fields = set()
+for record in complete_subject:
+    fields.update(set(record.keys()))
+with open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'approve_subjects.csv', 'wb') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=fields)
+    writer.writeheader()
+    for record in complete_subject:
         writer.writerow(record)
