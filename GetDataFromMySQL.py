@@ -7,7 +7,7 @@ from numpy import mean
 
 exp_fld = '/Users/yanivabir/Google Drive/Lab/GenderDim'
 usePickle = 0
-min_date = datetime(2018,7,10, 19, 0) #datetime(2018,6,24, 19, 0)
+min_date = datetime(2018,6,24, 19, 0)
 
 # Data base config
 db_url = "mysql://greenlab:11cookies11@brms.c1lkfpz6aowj.us-east-2.rds.amazonaws.com:3306/brmsdb"
@@ -29,15 +29,9 @@ if not usePickle:
     exclude = []
     for row in rows:
         data.append(row[data_column_name])
-<<<<<<< HEAD
         print (row['uniqueid'])
         print (row['beginhit'])
         print (row['cond'])
-=======
-        print(row['uniqueid'])
-        print(row['beginhit'])
-        print(row['cond'])
->>>>>>> 56e93e21c6b640f651ece64483346c6d860a7342
 
     data = data
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server','wb')
@@ -55,15 +49,9 @@ else:
 
     for row in rows:
         data.append(row[data_column_name])
-<<<<<<< HEAD
         print (row['uniqueid'])
         print (row['beginhit'])
         print (row['cond'])
-=======
-        print(row['uniqueid'])
-        print(row['beginhit'])
-        print(row['cond'])
->>>>>>> 56e93e21c6b640f651ece64483346c6d860a7342
 
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server', 'wb')
     pickle.dump(data, f)
@@ -80,16 +68,11 @@ data = [{'uniqueid': json.loads(part)['workerId'] + ":" + json.loads(part)['assi
         for part in data if part and 'jsPsych_trial_data' in json.loads(part)['questiondata']]
 
 # flatten brms trials and save vbl separately
-<<<<<<< HEAD
 print ("Worker IDs for approval:")
-=======
-print("Worker IDs for approval:")
->>>>>>> 56e93e21c6b640f651ece64483346c6d860a7342
 trialTypes = ['bRMS']
 brmsFieldnames = set()
 brms = []
 complete_subject = []
-reject_subject = []
 animation = []
 for part in data:
     acc = []
@@ -98,9 +81,6 @@ for part in data:
     for i in range(1, len(part['data'])):
         if part['data'][i]['internal_node_id'] == '0.0-27.0' and acc:
             complete_subject.append({'uniqueid': part['uniqueid'], 'acc': round(mean(acc), 2)})
-        if part['data'][i]['internal_node_id'] == '0.0-6.2-2.2-0.2' or \
-                part['data'][i]['internal_node_id'] == '0.0-1.0-0.0':
-            reject_subject.append({'uniqueid': part['uniqueid'], 'reason': part['data'][i]['internal_node_id']})
         if part['data'][i]['trial_type'] in trialTypes:
             part['data'][i]['uniqueid'] = part['uniqueid']
             part['data'][i]['Subject'] = data.index(part) + 1
@@ -142,11 +122,7 @@ for part in data:
             counter += 1
 
 for subj in (sorted(complete_subject, key=lambda k: k['uniqueid'])):
-<<<<<<< HEAD
     print (subj)
-=======
-    print(subj)
->>>>>>> 56e93e21c6b640f651ece64483346c6d860a7342
 
 
 # Flatten eventdata
@@ -213,24 +189,4 @@ with gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'animation_dat
     writer.writeheader()
 
     for record in animationf:
-        writer.writerow(record)
-
-
-# Save subject approves and rejects to file
-fields = set()
-for record in reject_subject:
-    fields.update(set(record.keys()))
-with open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'reject_subjects.csv', 'wb') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=fields)
-    writer.writeheader()
-    for record in reject_subject:
-        writer.writerow(record)
-
-fields = set()
-for record in complete_subject:
-    fields.update(set(record.keys()))
-with open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'approve_subjects.csv', 'wb') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=fields)
-    writer.writeheader()
-    for record in complete_subject:
         writer.writerow(record)
