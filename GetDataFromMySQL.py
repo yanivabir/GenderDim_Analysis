@@ -29,9 +29,9 @@ if not usePickle:
     exclude = []
     for row in rows:
         data.append(row[data_column_name])
-        print (row['uniqueid'])
-        print (row['beginhit'])
-        print (row['cond'])
+        print row['uniqueid']
+        print row['beginhit']
+        print row['cond']
 
     data = data
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server','wb')
@@ -49,9 +49,9 @@ else:
 
     for row in rows:
         data.append(row[data_column_name])
-        print (row['uniqueid'])
-        print (row['beginhit'])
-        print (row['cond'])
+        print row['uniqueid']
+        print row['beginhit']
+        print row['cond']
 
     f = gzip.open(exp_fld + '/Data/' + min_date.strftime("%Y%m%d") + 'data_from_server', 'wb')
     pickle.dump(data, f)
@@ -68,7 +68,7 @@ data = [{'uniqueid': json.loads(part)['workerId'] + ":" + json.loads(part)['assi
         for part in data if part and 'jsPsych_trial_data' in json.loads(part)['questiondata']]
 
 # flatten brms trials and save vbl separately
-print ("Worker IDs for approval:")
+print "Worker IDs for approval:"
 trialTypes = ['bRMS']
 brmsFieldnames = set()
 brms = []
@@ -122,7 +122,7 @@ for part in data:
             counter += 1
 
 for subj in (sorted(complete_subject, key=lambda k: k['uniqueid'])):
-    print (subj)
+    print subj
 
 
 # Flatten eventdata
