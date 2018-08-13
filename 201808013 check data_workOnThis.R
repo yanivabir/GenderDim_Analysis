@@ -5,7 +5,7 @@ library(rjson)
 library(ez)
 
 # Open data ----
-setwd ("C:\Users\yuval\Desktop\GenderDim_Analysis\Data")
+setwd ("C:/Users/user/Desktop/Yuval/Data")
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
