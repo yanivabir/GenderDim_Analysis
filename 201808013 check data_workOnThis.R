@@ -5,7 +5,7 @@ library(rjson)
 library(ez)
 
 # Open data ----
-setwd ("C:/Users/user/Desktop/Yuval/Data")
+setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data")
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -126,11 +126,42 @@ ggplot(mBT[, .(BT = mean(BT),
 
 t.test(BT ~ gender, mBT)
 
+# Plot Faces ----
+
 # check that there are enough trials for each face
+stimuluscount <- brms[, .(trials = .N), by = stimulus]
+stimuluscount <- stimuluscount[order(trials)]
+
+ggplot(stimuluscount, aes(x = trials)) +
+  geom_histogram(bins = 30)
 
 
-#correlation between BT and dominance/trustworthinessin each of the four groups
+#make 'stimuli' D.T for faces. **ask yaniv if there is a need to make the collumns factors with levels.**
+stimuli <- brms[,.(mean_BT = mean(rt)), by = stimulus]
+stimuli <- merge(stimuli, stimuluscount)
+stimuli <- stimuli[order(mean_BT)]
 
+ggplot(stimuli, aes(x = mean_BT)) +
+  geom_histogram(bins = 50)  #how many faces have each mean_BT?
+
+stimuli_gender <- brms[,.(stimulus_id = substring(stimulus,19,21)), by = stimulus]   #add id num for each face
+stimuli_gender <- stimuli_gender[, .(stim_gender = substring(stimulus,18,18), stimulus_id), by = stimulus]  #add stim_gender
+
+stimuli <- merge(stimuli_gender, stimuli)
+
+
+stimuli$stim_gender <- as.factor(stimuli$stim_gender)
+stimuli$stimulus_id <- as.factor(stimuli$stimulus_id)
+
+#check for global differences between male and female stimuli
+ggplot(stimuli[, .(mean_BT = mean(mean_BT),
+               se = sd(mean_BT) / sqrt(.N)), 
+           by = stim_gender], aes(x = stim_gender, y = mean_BT, ymin = mean_BT - se, ymax = mean_BT + se)) +
+  geom_pointrange()
+
+t.test(mean_BT ~ stim_gender, stimuli)
+
+#correlation between BT and dominance/trustworthiness in each of the four groups
 
 #regression.(check that the BT mean and median are similiar first)
 
