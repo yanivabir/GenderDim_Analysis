@@ -11,6 +11,7 @@ brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
 event <- fread(paste('../Data/', dataFrom, 'eventdata.csv', sep= ''))
 jsevent <- fread(paste('../Data/', dataFrom, 'jseventdata.csv', sep= ''))
+facetraits <- fread(paste('../Data/', '300FacesTraitPCs.csv', sep= ''))
 
 
 
@@ -161,7 +162,24 @@ ggplot(stimuli[, .(mean_BT = mean(mean_BT),
 
 t.test(mean_BT ~ stim_gender, stimuli)
 
+#face traits
+facetraits <- facetraits[,.(stimulus_id = substring(Stimulus, 10,12), Valence, Power, stim_gender)]
+facetraits$stim_gender <- as.factor(facetraits$stim_gender)
+facetraits$stimulus_id <- as.factor(facetraits$stimulus_id)
+
+stimuli <- merge(stimuli, facetraits, by = c("stimulus_id", "stim_gender"))
+stimuli[,"stimulus":=NULL]
+
 #correlation between BT and dominance/trustworthiness in each of the four groups
+ggplot(stimuli, aes(x = Power, y = mean_BT)) +
+  geom_point()
+
+cor.test(stimuli$mean_BT, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = mean_BT)) +
+  geom_point()
+
+cor.test(stimuli$mean_BT, stimuli$Valence)
 
 #regression.(check that the BT mean and median are similiar first)
 
