@@ -145,7 +145,7 @@ stimuli <- stimuli[order(mean_BT)]
 ggplot(stimuli, aes(x = mean_BT)) +
   geom_histogram(bins = 50)  #how many faces have each mean_BT?
 
-stimuli_gender <- brms[,.(stimulus_id = substring(stimulus,19,21)), by = stimulus]   #add id num for each face
+stimuli_gender <- brms[,.(stimulus_id = substring(stimulus,18,21)), by = stimulus]   #add id num for each face
 stimuli_gender <- stimuli_gender[, .(stim_gender = substring(stimulus,18,18), stimulus_id), by = stimulus]  #add stim_gender
 
 stimuli <- merge(stimuli_gender, stimuli)
@@ -163,14 +163,14 @@ ggplot(stimuli[, .(mean_BT = mean(mean_BT),
 t.test(mean_BT ~ stim_gender, stimuli)
 
 #face traits
-facetraits <- facetraits[,.(stimulus_id = substring(Stimulus, 10,12), Valence, Power, stim_gender)]
+facetraits <- facetraits[,.(stimulus_id = substring(Stimulus, 1,4), Valence, Power, stim_gender)]  #**change when new data arrives
 facetraits$stim_gender <- as.factor(facetraits$stim_gender)
 facetraits$stimulus_id <- as.factor(facetraits$stimulus_id)
 
-stimuli <- merge(stimuli, facetraits, by = c("stimulus_id", "stim_gender"))
+stimuli <- merge(stimuli, facetraits, by = c("stimulus_id", "stim_gender"), all.x = TRUE)
 stimuli[,"stimulus":=NULL]
 
-#correlation between BT and dominance/trustworthiness in each of the four groups
+#global correlation between BT and dominance/trustworthiness
 ggplot(stimuli, aes(x = Power, y = mean_BT)) +
   geom_point()
 
@@ -180,6 +180,76 @@ ggplot(stimuli, aes(x = Valence, y = mean_BT)) +
   geom_point()
 
 cor.test(stimuli$mean_BT, stimuli$Valence)
+
+#by group correlation between BT and dominance/trustworthiness
+
+brms <- merge(brms, dems[ , c("uniqueid", "gender")], by = "uniqueid") #add participents gender to brms
+#fXf
+fXf_brms <- brms[gender == "Female" & stim_gender == "f",]
+fXf_stimuli <- fXf_brms[,.(fXf_mBT = mean(rt)), by = stimulus]
+fXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+stimuli <- merge(stimuli, fXf_stimuli[ , c("stimulus_id", "fXf_mBT")], by = "stimulus_id", all.x = TRUE)
+ggplot(stimuli, aes(x = Power, y = fXf_mBT)) +
+  geom_point()
+
+cor.test(stimuli$fXf_mBT, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = fXf_mBT)) +
+  geom_point()
+
+cor.test(stimuli$fXf_mBT, stimuli$Valence)
+
+#mXf
+mXf_brms <- brms[gender == "Male" & stim_gender == "f",]
+mXf_stimuli <- mXf_brms[,.(mXf_mBT = mean(rt)), by = stimulus]
+mXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+stimuli <- merge(stimuli, mXf_stimuli[ , c("stimulus_id", "mXf_mBT")], by = "stimulus_id", all.x = TRUE)
+ggplot(stimuli, aes(x = Power, y = mXf_mBT)) +
+  geom_point()
+
+cor.test(stimuli$mXf_mBT, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = mXf_mBT)) +
+  geom_point()
+
+cor.test(stimuli$mXf_mBT, stimuli$Valence)
+
+#mXm
+mXm_brms <- brms[gender == "Male" & stim_gender == "m",]
+mXm_stimuli <- mXm_brms[,.(mXm_mBT = mean(rt)), by = stimulus]
+mXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+stimuli <- merge(stimuli, mXm_stimuli[ , c("stimulus_id", "mXm_mBT")], by = "stimulus_id", all.x = TRUE)
+ggplot(stimuli, aes(x = Power, y = mXm_mBT)) +
+  geom_point()
+
+cor.test(stimuli$mXm_mBT, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = mXm_mBT)) +
+  geom_point()
+
+cor.test(stimuli$mXm_mBT, stimuli$Valence)
+
+#fXm
+fXm_brms <- brms[gender == "Female" & stim_gender == "m",]
+fXm_stimuli <- fXm_brms[,.(fXm_mBT = mean(rt)), by = stimulus]
+fXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+stimuli <- merge(stimuli, fXm_stimuli[ , c("stimulus_id", "fXm_mBT")], by = "stimulus_id", all.x = TRUE)
+
+ggplot(stimuli, aes(x = Power, y = fXm_mBT)) +
+  geom_point()
+
+cor.test(stimuli$fXm_mBT, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = fXm_mBT)) +
+  geom_point()
+
+cor.test(stimuli$fXm_mBT, stimuli$Valence)
+
+brms[, stimulus_id := factor(substring(stimulus, 18,21))]
+
+#stimuli$mean_zrt <- brms[,.(mean_zrt = mean(zrt)), by = stimulus_id]  ???? ???????? ??????
+
+#**add mean z columns to stimuli**# 
 
 #regression.(check that the BT mean and median are similiar first)
 
