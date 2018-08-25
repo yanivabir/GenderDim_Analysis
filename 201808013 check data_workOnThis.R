@@ -59,7 +59,7 @@ dems <- dems[, .(age = as.numeric(fromJSON(responses[internal_node_id == '0.0-10
                  politics_iraq = fromJSON(responses[question == 'Iraq'])$Q0,
                  politics_gays = fromJSON(responses[question == 'Homosexuals'])$Q0,
                  politics_guns = fromJSON(responses[question == 'Gun control'])$Q0,
-                 politics_stemcelss = fromJSON(responses[question == 'Stem Cell'])$Q0,
+                 politics_stemcells = fromJSON(responses[question == 'Stem Cell'])$Q0,
                  politics_abortion = fromJSON(responses[question == 'Abortion'])$Q0,
                  politics_affirmative_action = fromJSON(responses[question == 'Affirmative action'])$Q0), 
              by = .(uniqueid)]
@@ -74,6 +74,22 @@ dems$gender <- factor(dems$gender)
 dems$native <- factor(dems$native)
 dems$sexuality <- factor(dems$sexuality)
 dems$attracted <- factor(dems$attracted)
+
+dems[, z_death_penalty := scale(-1 * politics_death_penalty)]
+dems[, z_environment := scale(-1 * politics_environment)]
+dems[, z_iraq := scale(politics_iraq)]
+dems[, z_gays := scale(politics_gays)]
+dems[, z_guns := scale(politics_guns)]
+dems[, z_stemcells := scale(politics_stemcells)]
+dems[, z_abortion := scale(politics_abortion)]
+dems[, z_affirmative_action := scale(politics_affirmative_action)]
+
+dems$politics_overall_avg <- dems[, .((politics_iraq + politics_gays + politics_guns + politics_stemcells + politics_abortion +
+                                politics_affirmative_action - politics_death_penalty - politics_environment) / 8)]
+
+dems$politics_z_avg <- dems[, .((z_iraq + z_gays + z_guns + z_stemcells + z_abortion +
+                                         z_affirmative_action + z_death_penalty + z_environment) / 8)]
+
 summary(dems)
 
 ggplot(dems, aes(x = age)) +
@@ -101,7 +117,8 @@ ggplot(brms, aes(x = rt)) +
   facet_wrap('uniqueid', scales = 'free_x')
 
 # Exclude outlier trials per subject
-brms[, zrt := scale(rt), by = uniqueid]
+
+brms[, zrt := scale(rt), by = uniqueid]  #ask yaniv: should i scale again after removing extreme z scores?
 brms <- brms[abs(zrt) < 3]
 
 ggplot(brms, aes(x = rt)) +
@@ -109,6 +126,7 @@ ggplot(brms, aes(x = rt)) +
   facet_wrap('uniqueid', scales = 'free_x')
 
 # Plot BTs ----
+
 mBT <- brms[, .(BT = mean(rt)), by = uniqueid]
 ggplot(mBT, aes(x = BT)) +
   geom_histogram(bins = 15)
@@ -116,9 +134,25 @@ ggplot(mBT, aes(x = BT)) +
 mBT <- merge(mBT, dems)
 
 ggplot(mBT, aes(x = age, y = BT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
 
-cor.test(mBT$BT, mBT$age)
+  cor.test(mBT$BT, mBT$age)
+
+
+ggplot(mBT, aes(x = politics_z_avg, y = BT)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  cor.test(mBT$BT, mBT$politics_z_avg)
+
+
+ggplot(mBT, aes(x = age, y = politics_z_avg)) +
+  geom_point() +
+  geom_smooth(method='lm')
+  
+  cor.test(mBT$age, mBT$politics_z_avg)
+
 
 ggplot(mBT[, .(BT = mean(BT),
                se = sd(BT) / sqrt(.N)), 
@@ -139,6 +173,8 @@ ggplot(stimuluscount, aes(x = trials)) +
 
 #make 'stimuli' D.T for faces. **ask yaniv if there is a need to make the collumns factors with levels.**
 stimuli <- brms[,.(mean_BT = mean(rt)), by = stimulus]
+mZT <- brms[,.(mean_Z = mean(zrt)), by = stimulus]
+stimuli <- merge(stimuli, mZT)
 stimuli <- merge(stimuli, stimuluscount)
 stimuli <- stimuli[order(mean_BT)]
 
@@ -172,86 +208,162 @@ stimuli[,"stimulus":=NULL]
 
 #global correlation between BT and dominance/trustworthiness
 ggplot(stimuli, aes(x = Power, y = mean_BT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
+
 
 cor.test(stimuli$mean_BT, stimuli$Power)
 
 ggplot(stimuli, aes(x = Valence, y = mean_BT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
+
 
 cor.test(stimuli$mean_BT, stimuli$Valence)
 
 #by group correlation between BT and dominance/trustworthiness
 
 brms <- merge(brms, dems[ , c("uniqueid", "gender")], by = "uniqueid") #add participents gender to brms
-#fXf
+
+    #fXf
 fXf_brms <- brms[gender == "Female" & stim_gender == "f",]
 fXf_stimuli <- fXf_brms[,.(fXf_mBT = mean(rt)), by = stimulus]
+fXf_mZ <- fXf_brms[,.(fXf_mean_Z = mean(zrt)), by = stimulus]
+fXf_stimuli <- merge(fXf_stimuli, fXf_mZ)
 fXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
-stimuli <- merge(stimuli, fXf_stimuli[ , c("stimulus_id", "fXf_mBT")], by = "stimulus_id", all.x = TRUE)
-ggplot(stimuli, aes(x = Power, y = fXf_mBT)) +
-  geom_point()
+stimuli <- merge(stimuli, fXf_stimuli[ , c("stimulus_id", "fXf_mBT","fXf_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-cor.test(stimuli$fXf_mBT, stimuli$Power)
+ggplot(stimuli, aes(x = Power, y = fXf_mBT)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$fXf_mBT, stimuli$Power)
 
 ggplot(stimuli, aes(x = Valence, y = fXf_mBT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
 
-cor.test(stimuli$fXf_mBT, stimuli$Valence)
 
-#mXf
+  cor.test(stimuli$fXf_mBT, stimuli$Valence)
+
+ggplot(stimuli, aes(x = Power, y = fXf_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$fXf_mean_Z, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = fXf_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$fXf_mean_Z, stimuli$Valence)
+
+    #mXf
 mXf_brms <- brms[gender == "Male" & stim_gender == "f",]
 mXf_stimuli <- mXf_brms[,.(mXf_mBT = mean(rt)), by = stimulus]
+mXf_mZ <- mXf_brms[,.(mXf_mean_Z = mean(zrt)), by = stimulus]
+mXf_stimuli <- merge(mXf_stimuli, mXf_mZ)
 mXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
-stimuli <- merge(stimuli, mXf_stimuli[ , c("stimulus_id", "mXf_mBT")], by = "stimulus_id", all.x = TRUE)
-ggplot(stimuli, aes(x = Power, y = mXf_mBT)) +
-  geom_point()
+stimuli <- merge(stimuli, mXf_stimuli[ , c("stimulus_id", "mXf_mBT", "mXf_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-cor.test(stimuli$mXf_mBT, stimuli$Power)
+ggplot(stimuli, aes(x = Power, y = mXf_mBT)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  cor.test(stimuli$mXf_mBT, stimuli$Power)
 
 ggplot(stimuli, aes(x = Valence, y = mXf_mBT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
 
-cor.test(stimuli$mXf_mBT, stimuli$Valence)
+  cor.test(stimuli$mXf_mBT, stimuli$Valence)
 
-#mXm
+ggplot(stimuli, aes(x = Power, y = mXf_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  cor.test(stimuli$mXf_mean_Z, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = mXf_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  cor.test(stimuli$mXf_mean_Z, stimuli$Valence)
+
+    #mXm
 mXm_brms <- brms[gender == "Male" & stim_gender == "m",]
 mXm_stimuli <- mXm_brms[,.(mXm_mBT = mean(rt)), by = stimulus]
+mXm_mZ <- mXm_brms[,.(mXm_mean_Z = mean(zrt)), by = stimulus]
+mXm_stimuli <- merge(mXm_stimuli, mXm_mZ)
 mXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
-stimuli <- merge(stimuli, mXm_stimuli[ , c("stimulus_id", "mXm_mBT")], by = "stimulus_id", all.x = TRUE)
-ggplot(stimuli, aes(x = Power, y = mXm_mBT)) +
-  geom_point()
+stimuli <- merge(stimuli, mXm_stimuli[ , c("stimulus_id", "mXm_mBT", "mXm_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-cor.test(stimuli$mXm_mBT, stimuli$Power)
+ggplot(stimuli, aes(x = Power, y = mXm_mBT)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$mXm_mBT, stimuli$Power)
 
 ggplot(stimuli, aes(x = Valence, y = mXm_mBT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
 
-cor.test(stimuli$mXm_mBT, stimuli$Valence)
 
-#fXm
+  cor.test(stimuli$mXm_mBT, stimuli$Valence)
+
+ggplot(stimuli, aes(x = Power, y = mXm_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$mXm_mean_Z, stimuli$Power)
+
+ggplot(stimuli, aes(x = Valence, y = mXm_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+
+  cor.test(stimuli$mXm_mean_Z, stimuli$Valence)
+
+    #fXm
 fXm_brms <- brms[gender == "Female" & stim_gender == "m",]
 fXm_stimuli <- fXm_brms[,.(fXm_mBT = mean(rt)), by = stimulus]
+fXm_mZ <- fXm_brms[,.(fXm_mean_Z = mean(zrt)), by = stimulus]
+fXm_stimuli <- merge(fXm_stimuli, fXm_mZ)
 fXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
-stimuli <- merge(stimuli, fXm_stimuli[ , c("stimulus_id", "fXm_mBT")], by = "stimulus_id", all.x = TRUE)
+stimuli <- merge(stimuli, fXm_stimuli[ , c("stimulus_id", "fXm_mBT", "fXm_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
 ggplot(stimuli, aes(x = Power, y = fXm_mBT)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(method='lm')
 
-cor.test(stimuli$fXm_mBT, stimuli$Power)
+
+  cor.test(stimuli$fXm_mBT, stimuli$Power)
 
 ggplot(stimuli, aes(x = Valence, y = fXm_mBT)) +
-  geom_point()
-
-cor.test(stimuli$fXm_mBT, stimuli$Valence)
-
-brms[, stimulus_id := factor(substring(stimulus, 18,21))]
-
-#stimuli$mean_zrt <- brms[,.(mean_zrt = mean(zrt)), by = stimulus_id]  ???? ???????? ??????
-
-#**add mean z columns to stimuli**# 
-
-#regression.(check that the BT mean and median are similiar first)
+  geom_point() +
+  geom_smooth(method='lm')
 
 
-# find the priority dimension for each participants and stimuli sex
+  cor.test(stimuli$fXm_mBT, stimuli$Valence)
+ 
+ggplot(stimuli, aes(x = Power, y = fXm_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  
+  cor.test(stimuli$fXm_mean_Z, stimuli$Power)
+  
+ggplot(stimuli, aes(x = Valence, y = fXm_mean_Z)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+  
+  cor.test(stimuli$fXm_mean_Z, stimuli$Valence)
+  
+
+# reverse correlation- find the priority dimension for each participants and stimuli sex
