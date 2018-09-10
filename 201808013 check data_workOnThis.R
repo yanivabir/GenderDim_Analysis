@@ -13,6 +13,10 @@ event <- fread(paste('../Data/', dataFrom, 'eventdata.csv', sep= ''))
 jsevent <- fread(paste('../Data/', dataFrom, 'jseventdata.csv', sep= ''))
 facetraits <- fread(paste('../Data/', '300FacesTraitPCs.csv', sep= ''))
 
+female_params <- fread(paste('../Data/', '300female_coord_allparams.csv', sep= ''))
+male_params <- fread(paste('../Data/', '300male_coord_allparams.csv', sep= ''))
+social_dims <- fread(paste('../Data/', 'si-genders.csv', sep= ''))
+
 
 
 
@@ -207,163 +211,232 @@ stimuli <- merge(stimuli, facetraits, by = c("stimulus_id", "stim_gender"), all.
 stimuli[,"stimulus":=NULL]
 
 #global correlation between BT and dominance/trustworthiness
-ggplot(stimuli, aes(x = Power, y = mean_BT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = mean_BT)) +
+  #geom_point() +
+  #geom_smooth(method='lm')
 
 
-cor.test(stimuli$mean_BT, stimuli$Power)
+#cor.test(stimuli$mean_BT, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = mean_BT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = mean_BT)) +
+ #geom_point() +
+ # geom_smooth(method='lm')
 
 
 cor.test(stimuli$mean_BT, stimuli$Valence)
 
+
+#merge female and male stimuli to one df
+stimuli$stim_gender <- NULL
+stimuli_F <- stimuli[1:300]
+  stimuli_F[, stimulus_id := factor(substring(stimulus_id, 2,4))]
+
+stimuli_M <- stimuli[301:600]
+  stimuli_M[, stimulus_id := factor(substring(stimulus_id, 2,4))]
+
+
+stimuli <- merge(stimuli_F, stimuli_M, by = "stimulus_id")
+colnames(stimuli) <- gsub('.x','.F',names(stimuli))
+colnames(stimuli) <- gsub('.y','.M',names(stimuli))
+
 #by group correlation between BT and dominance/trustworthiness
 
-brms <- merge(brms, dems[ , c("uniqueid", "gender")], by = "uniqueid") #add participents gender to brms
+brms <- merge(brms, dems[ , c("uniqueid", "gender")], by = "uniqueid") #add participants gender to brms
 
     #fXf
 fXf_brms <- brms[gender == "Female" & stim_gender == "f",]
 fXf_stimuli <- fXf_brms[,.(fXf_mBT = mean(rt)), by = stimulus]
 fXf_mZ <- fXf_brms[,.(fXf_mean_Z = mean(zrt)), by = stimulus]
 fXf_stimuli <- merge(fXf_stimuli, fXf_mZ)
-fXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+fXf_stimuli[, stimulus_id := factor(substring(stimulus, 19,21))]
 stimuli <- merge(stimuli, fXf_stimuli[ , c("stimulus_id", "fXf_mBT","fXf_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-ggplot(stimuli, aes(x = Power, y = fXf_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = fXf_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$fXf_mBT, stimuli$Power)
+  #cor.test(stimuli$fXf_mBT, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = fXf_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
-
-
-  cor.test(stimuli$fXf_mBT, stimuli$Valence)
-
-ggplot(stimuli, aes(x = Power, y = fXf_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = fXf_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$fXf_mean_Z, stimuli$Power)
+  #cor.test(stimuli$fXf_mBT, stimuli$Valence)
 
-ggplot(stimuli, aes(x = Valence, y = fXf_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = fXf_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$fXf_mean_Z, stimuli$Valence)
+ # cor.test(stimuli$fXf_mean_Z, stimuli$Power)
+
+#ggplot(stimuli, aes(x = Valence, y = fXf_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
+
+
+  #cor.test(stimuli$fXf_mean_Z, stimuli$Valence)
 
     #mXf
 mXf_brms <- brms[gender == "Male" & stim_gender == "f",]
 mXf_stimuli <- mXf_brms[,.(mXf_mBT = mean(rt)), by = stimulus]
 mXf_mZ <- mXf_brms[,.(mXf_mean_Z = mean(zrt)), by = stimulus]
 mXf_stimuli <- merge(mXf_stimuli, mXf_mZ)
-mXf_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+mXf_stimuli[, stimulus_id := factor(substring(stimulus, 19,21))] 
 stimuli <- merge(stimuli, mXf_stimuli[ , c("stimulus_id", "mXf_mBT", "mXf_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-ggplot(stimuli, aes(x = Power, y = mXf_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = mXf_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
-  cor.test(stimuli$mXf_mBT, stimuli$Power)
+  #cor.test(stimuli$mXf_mBT, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = mXf_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = mXf_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
-  cor.test(stimuli$mXf_mBT, stimuli$Valence)
+  #cor.test(stimuli$mXf_mBT, stimuli$Valence)
 
-ggplot(stimuli, aes(x = Power, y = mXf_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = mXf_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
-  cor.test(stimuli$mXf_mean_Z, stimuli$Power)
+  #cor.test(stimuli$mXf_mean_Z, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = mXf_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = mXf_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
-  cor.test(stimuli$mXf_mean_Z, stimuli$Valence)
+  #cor.test(stimuli$mXf_mean_Z, stimuli$Valence)
 
     #mXm
 mXm_brms <- brms[gender == "Male" & stim_gender == "m",]
 mXm_stimuli <- mXm_brms[,.(mXm_mBT = mean(rt)), by = stimulus]
 mXm_mZ <- mXm_brms[,.(mXm_mean_Z = mean(zrt)), by = stimulus]
 mXm_stimuli <- merge(mXm_stimuli, mXm_mZ)
-mXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+mXm_stimuli[, stimulus_id := factor(substring(stimulus, 19,21))]
 stimuli <- merge(stimuli, mXm_stimuli[ , c("stimulus_id", "mXm_mBT", "mXm_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-ggplot(stimuli, aes(x = Power, y = mXm_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = mXm_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$mXm_mBT, stimuli$Power)
+  #cor.test(stimuli$mXm_mBT, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = mXm_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
-
-
-  cor.test(stimuli$mXm_mBT, stimuli$Valence)
-
-ggplot(stimuli, aes(x = Power, y = mXm_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = mXm_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$mXm_mean_Z, stimuli$Power)
+  #cor.test(stimuli$mXm_mBT, stimuli$Valence)
 
-ggplot(stimuli, aes(x = Valence, y = mXm_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = mXm_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$mXm_mean_Z, stimuli$Valence)
+  #cor.test(stimuli$mXm_mean_Z, stimuli$Power)
+
+#ggplot(stimuli, aes(x = Valence, y = mXm_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
+
+
+  #cor.test(stimuli$mXm_mean_Z, stimuli$Valence)
 
     #fXm
 fXm_brms <- brms[gender == "Female" & stim_gender == "m",]
 fXm_stimuli <- fXm_brms[,.(fXm_mBT = mean(rt)), by = stimulus]
 fXm_mZ <- fXm_brms[,.(fXm_mean_Z = mean(zrt)), by = stimulus]
 fXm_stimuli <- merge(fXm_stimuli, fXm_mZ)
-fXm_stimuli[, stimulus_id := factor(substring(stimulus, 18,21))]
+fXm_stimuli[, stimulus_id := factor(substring(stimulus, 19,21))]
 stimuli <- merge(stimuli, fXm_stimuli[ , c("stimulus_id", "fXm_mBT", "fXm_mean_Z")], by = "stimulus_id", all.x = TRUE)
 
-ggplot(stimuli, aes(x = Power, y = fXm_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = fXm_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$fXm_mBT, stimuli$Power)
+  #cor.test(stimuli$fXm_mBT, stimuli$Power)
 
-ggplot(stimuli, aes(x = Valence, y = fXm_mBT)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = fXm_mBT)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
 
-  cor.test(stimuli$fXm_mBT, stimuli$Valence)
+  #cor.test(stimuli$fXm_mBT, stimuli$Valence)
  
-ggplot(stimuli, aes(x = Power, y = fXm_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Power, y = fXm_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
   
-  cor.test(stimuli$fXm_mean_Z, stimuli$Power)
+ # cor.test(stimuli$fXm_mean_Z, stimuli$Power)
   
-ggplot(stimuli, aes(x = Valence, y = fXm_mean_Z)) +
-  geom_point() +
-  geom_smooth(method='lm')
+#ggplot(stimuli, aes(x = Valence, y = fXm_mean_Z)) +
+ # geom_point() +
+  #geom_smooth(method='lm')
 
   
-  cor.test(stimuli$fXm_mean_Z, stimuli$Valence)
+  #cor.test(stimuli$fXm_mean_Z, stimuli$Valence)
   
 
-# reverse correlation- find the priority dimension for each participants and stimuli sex
+# reverse correlation ----
+
+female_params <- female_params[2:301,2:51]
+male_params <- male_params[2:301,2:51]
+
+### Define dimension extraction procedure as a function
+extractDimension <- function(x, faces = faces) {
+  
+  faces <- data.matrix(faces) # Make face data frame into a matrix easy to work with
+  print(faces)
+  # Subtract the mean from Its
+  x <- x - mean(x)
+  print(x)
+  # Create the weighted average
+  Dim <- x %*% faces
+  
+  # Normalize
+  Dim <- t(Dim / sqrt(sum(Dim^2)))
+  
+  # Return diemsnion
+    return(Dim)
+}
+
+fXm_dim <- extractDimension(stimuli[,fXm_mean_Z], male_params)
+fXf_dim <- extractDimension(stimuli[,fXf_mean_Z], female_params)
+mXm_dim <- extractDimension(stimuli[,mXm_mean_Z], male_params)
+mXf_dim <- extractDimension(stimuli[,mXf_mean_Z], female_params)
+
+bothXm_dim <- extractDimension(stimuli[,mean_Z.M], male_params)
+
+#check correlation with dimensions
+
+social_dims <- social_dims[,1:51]
+
+trust_fXm <- social_dims[1,2:51]
+dom_fXm <- social_dims[2,2:51]
+trust_fXf <- social_dims[3,2:51]
+dom_fXf <- social_dims[4,2:51]
+trust_mXm <- social_dims[5,2:51]
+dom_mXm <- social_dims[6,2:51]
+trust_mXf <- social_dims[7,2:51]
+dom_mXf <- social_dims[8,2:51]
+
+dom_bothXm <- social_dims[10,2:51]
+
+cor.test(as.numeric( dom_fXm), (fXm_dim))
+cor.test(as.numeric( trust_fXm), (fXm_dim))
+cor.test(as.numeric( dom_fXf), (fXf_dim))
+cor.test(as.numeric( trust_fXf), (fXf_dim))
+cor.test(as.numeric( dom_mXm), (mXm_dim))
+cor.test(as.numeric( trust_mXm), (mXm_dim))
+cor.test(as.numeric( dom_mXf), (mXf_dim))
+cor.test(as.numeric( trust_mXf), (mXf_dim))
+
+
+
