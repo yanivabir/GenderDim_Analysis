@@ -392,8 +392,13 @@ male_params <- male_params[2:301,2:51]
 ### Define dimension extraction procedure as a function
 extractDimension <- function(x, faces = faces) {
   
+  completeVector <- complete.cases(x)
+  faces <- faces[completeVector]
+  x <- x[completeVector]
   faces <- data.matrix(faces) # Make face data frame into a matrix easy to work with
+  print(x)
   print(faces)
+  
   # Subtract the mean from Its
   x <- x - mean(x)
   print(x)
@@ -406,6 +411,8 @@ extractDimension <- function(x, faces = faces) {
   # Return diemsnion
     return(Dim)
 }
+
+
 
 fXm_dim <- extractDimension(stimuli[,fXm_mean_Z], male_params)
 fXf_dim <- extractDimension(stimuli[,fXf_mean_Z], female_params)
