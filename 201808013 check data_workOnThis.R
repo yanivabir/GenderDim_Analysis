@@ -5,7 +5,7 @@ library(rjson)
 library(ez)
 
 # Open data ----
-setwd ("C:\Users\user\Documents\GitHub\GenderDim_Analysis")
+setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data")
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -161,7 +161,11 @@ ggplot(mBT, aes(x = age, y = politics_z_avg)) +
 ggplot(mBT[, .(BT = mean(BT),
                se = sd(BT) / sqrt(.N)), 
            by = gender], aes(x = gender, y = BT, ymin = BT - se, ymax = BT + se)) +
-  geom_pointrange()
+  geom_pointrange() +
+  
+
+
+
 
 t.test(BT ~ gender, mBT)
 
@@ -199,6 +203,7 @@ ggplot(stimuli[, .(mean_BT = mean(mean_BT),
                se = sd(mean_BT) / sqrt(.N)), 
            by = stim_gender], aes(x = stim_gender, y = mean_BT, ymin = mean_BT - se, ymax = mean_BT + se)) +
   geom_pointrange()
+
 
 t.test(mean_BT ~ stim_gender, stimuli)
 
