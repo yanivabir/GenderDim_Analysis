@@ -5,7 +5,8 @@ library(rjson)
 library(ez)
 
 # Open data ----
-setwd ("C:\Users\user\Documents\GitHub\GenderDim_Analysis")
+#setwd ("C:\Users\user\Documents\GitHub\GenderDim_Analysis") #lab pc
+setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -161,7 +162,8 @@ ggplot(mBT, aes(x = age, y = politics_z_avg)) +
 ggplot(mBT[, .(BT = mean(BT),
                se = sd(BT) / sqrt(.N)), 
            by = gender], aes(x = gender, y = BT, ymin = BT - se, ymax = BT + se)) +
-  geom_pointrange()
+  geom_pointrange(size = 1) +
+  labs(title = "title", x = "participants gender", y = "average BT", tag = "a")
 
 t.test(BT ~ gender, mBT)
 
