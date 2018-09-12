@@ -5,8 +5,12 @@ library(rjson)
 library(ez)
 
 # Open data ----
+<<<<<<< HEAD
 #setwd ("C:\Users\user\Documents\GitHub\GenderDim_Analysis") #lab pc
 setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
+=======
+setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data")
+>>>>>>> 229dc8bb97eda3802e46a3ac290341c1327649fb
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -162,8 +166,16 @@ ggplot(mBT, aes(x = age, y = politics_z_avg)) +
 ggplot(mBT[, .(BT = mean(BT),
                se = sd(BT) / sqrt(.N)), 
            by = gender], aes(x = gender, y = BT, ymin = BT - se, ymax = BT + se)) +
+<<<<<<< HEAD
   geom_pointrange(size = 1) +
   labs(title = "title", x = "participants gender", y = "average BT", tag = "a")
+=======
+  geom_pointrange() +
+  
+
+
+
+>>>>>>> 229dc8bb97eda3802e46a3ac290341c1327649fb
 
 t.test(BT ~ gender, mBT)
 
@@ -201,6 +213,7 @@ ggplot(stimuli[, .(mean_BT = mean(mean_BT),
                se = sd(mean_BT) / sqrt(.N)), 
            by = stim_gender], aes(x = stim_gender, y = mean_BT, ymin = mean_BT - se, ymax = mean_BT + se)) +
   geom_pointrange()
+
 
 t.test(mean_BT ~ stim_gender, stimuli)
 
