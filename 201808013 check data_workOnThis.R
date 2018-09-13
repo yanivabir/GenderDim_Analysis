@@ -19,8 +19,6 @@ male_params <- fread(paste('../Data/', '300male_coord_allparams.csv', sep= ''))
 social_dims <- fread(paste('../Data/', 'si-genders.csv', sep= ''))
 
 
-
-
 # Prepare data ----
 brms$uniqueid <- factor(brms$uniqueid)
 brms[, stim_gender := factor(substring(stimulus, 18,18))]
@@ -36,6 +34,7 @@ brms <- brms[uniqueid %in% trialCount$uniqueid]
 quest <- quest[uniqueid %in% trialCount$uniqueid]
 event <- event[uniqueid %in% trialCount$uniqueid]
 jsevent <- jsevent[uniqueid %in% trialCount$uniqueid]
+
 
 # Extract demographics ----
 # Get only questions
@@ -420,10 +419,10 @@ fXm_dim <- extractDimension(stimuli[,fXm_mean_Z], male_params)
 fXf_dim <- extractDimension(stimuli[,fXf_mean_Z], female_params)
 mXm_dim <- extractDimension(stimuli[,mXm_mean_Z], male_params)
 mXf_dim <- extractDimension(stimuli[,mXf_mean_Z], female_params)
-
 bothXm_dim <- extractDimension(stimuli[,mean_Z.M], male_params)
+bothXf_dim <- extractDimension(stimuli[,mean_Z.F], female_params)
 
-#check correlation with dimensions
+### check correlation with dimensions
 
 social_dims <- social_dims[,1:51]
 
@@ -435,9 +434,12 @@ trust_mXm <- social_dims[5,2:51]
 dom_mXm <- social_dims[6,2:51]
 trust_mXf <- social_dims[7,2:51]
 dom_mXf <- social_dims[8,2:51]
-
+trust_bothXm <- social_dims[9,2:51]
 dom_bothXm <- social_dims[10,2:51]
+trust_bothXf <- social_dims[11,2:51]
+dom_bothXf <- social_dims[12,2:51]
 
+#by groups
 cor.test(as.numeric( dom_fXm), (fXm_dim))
 cor.test(as.numeric( trust_fXm), (fXm_dim))
 cor.test(as.numeric( dom_fXf), (fXf_dim))
@@ -447,5 +449,9 @@ cor.test(as.numeric( trust_mXm), (mXm_dim))
 cor.test(as.numeric( dom_mXf), (mXf_dim))
 cor.test(as.numeric( trust_mXf), (mXf_dim))
 
-
+#by stimulus gender only
+cor.test(as.numeric( dom_bothXm), (bothXm_dim))
+cor.test(as.numeric( trust_bothXm), (bothXm_dim))
+cor.test(as.numeric( dom_bothXf), (bothXf_dim))
+cor.test(as.numeric( trust_bothXf), (bothXf_dim))
 
