@@ -3,10 +3,11 @@ library(ggplot2)
 theme_set(theme_bw())
 library(rjson)
 library(ez)
+library(plyr)
 
 # Open data ----
-setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
-#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
+#setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
+setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -391,26 +392,24 @@ female_params <- female_params[2:301,2:51]
 male_params <- male_params[2:301,2:51]
 
 ### Define dimension extraction procedure as a function
-extractDimension <- function(x, faces = faces) {
+extractDimension <- function(x, faces = faces, result = "dimension") {
   
   completeVector <- complete.cases(x)
   faces <- faces[completeVector]
   x <- x[completeVector]
   faces <- data.matrix(faces) # Make face data frame into a matrix easy to work with
-  print(x)
-  print(faces)
   
   # Subtract the mean from Its
   x <- x - mean(x)
-  print(x)
-  # Create the weighted average
+    # Create the weighted average
   Dim <- x %*% faces
   
   # Normalize
   Dim <- t(Dim / sqrt(sum(Dim^2)))
   
-  # Return diemsnion
-    return(Dim)
+  # Return diemsnion, or dimension scores (computed as projection of each face on dimension)
+  return(switch(result, scores = drop(faces %*% Dim), dimension = Dim))
+  
 }
 
 
@@ -421,6 +420,13 @@ mXm_dim <- extractDimension(stimuli[,mXm_mean_Z], male_params)
 mXf_dim <- extractDimension(stimuli[,mXf_mean_Z], female_params)
 bothXm_dim <- extractDimension(stimuli[,mean_Z.M], male_params)
 bothXf_dim <- extractDimension(stimuli[,mean_Z.F], female_params)
+
+fXm_dim_sc <- extractDimension(stimuli[,fXm_mean_Z], male_params, result = "scores")
+fXf_dim_sc <- extractDimension(stimuli[,fXf_mean_Z], female_params, result = "scores")
+mXm_dim_sc <- extractDimension(stimuli[,mXm_mean_Z], male_params, result = "scores")
+mXf_dim_sc <- extractDimension(stimuli[,mXf_mean_Z], female_params, result = "scores")
+bothXm_dim_sc <- extractDimension(stimuli[,mean_Z.M], male_params, result = "scores")
+bothXf_dim_sc <- extractDimension(stimuli[,mean_Z.F], female_params, result = "scores")
 
 ### check correlation with dimensions
 
@@ -455,3 +461,32 @@ cor.test(as.numeric( trust_bothXm), (bothXm_dim))
 cor.test(as.numeric( dom_bothXf), (bothXf_dim))
 cor.test(as.numeric( trust_bothXf), (bothXf_dim))
 
+#check cor between priority dim and bt's
+fXf_mZ <- fXf_mZ[order(stimulus)]
+fXf_mZ <- cbind(fXf_mZ, fXf_dim_sc)
+fXm_mZ <- fXm_mZ[order(stimulus)]
+fXm_mZ <- cbind(fXm_mZ, fXm_dim_sc)
+mXf_mZ <- mXf_mZ[order(stimulus)]
+mXf_mZ <- cbind(mXf_mZ, mXf_dim_sc)
+mXm_mZ <- mXm_mZ[order(stimulus)]
+mXm_mZ <- cbind(mXm_mZ, mXm_dim_sc)
+
+cor.test(fXf_dim_sc, fXf_mZ[,fXf_mean_Z])
+ggplot(fXf_mZ, aes(x = fXf_mean_Z, y = fXf_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+cor.test(fXm_dim_sc, fXm_mZ[,fXm_mean_Z])
+ggplot(fXm_mZ, aes(x = fXm_mean_Z, y = fXm_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+cor.test(mXf_dim_sc, mXf_mZ[,mXf_mean_Z])
+ggplot(mXf_mZ, aes(x = mXf_mean_Z, y = mXf_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+cor.test(mXm_dim_sc, mXm_mZ[,mXm_mean_Z])
+ggplot(mXm_mZ, aes(x = mXm_mean_Z, y = mXm_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
