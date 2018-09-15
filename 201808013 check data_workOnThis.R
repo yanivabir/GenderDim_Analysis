@@ -4,6 +4,8 @@ theme_set(theme_bw())
 library(rjson)
 library(ez)
 library(plyr)
+library(Hmisc)
+
 
 # Open data ----
 #setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
@@ -470,6 +472,9 @@ mXf_mZ <- mXf_mZ[order(stimulus)]
 mXf_mZ <- cbind(mXf_mZ, mXf_dim_sc)
 mXm_mZ <- mXm_mZ[order(stimulus)]
 mXm_mZ <- cbind(mXm_mZ, mXm_dim_sc)
+bothXm_mZ <- data.table(cbind(bothXm_dim_sc,bothXm_mean_Z = stimuli[,mean_Z.M ]))
+bothXf_mZ <- data.table(cbind(bothXf_dim_sc,bothXf_mean_Z = stimuli[,mean_Z.F ]))
+
 
 cor.test(fXf_dim_sc, fXf_mZ[,fXf_mean_Z])
 ggplot(fXf_mZ, aes(x = fXf_mean_Z, y = fXf_dim_sc)) +
@@ -490,3 +495,18 @@ cor.test(mXm_dim_sc, mXm_mZ[,mXm_mean_Z])
 ggplot(mXm_mZ, aes(x = mXm_mean_Z, y = mXm_dim_sc)) +
   geom_point() +
   geom_smooth(method='lm')
+
+cor.test(bothXm_dim_sc, bothXm_mZ[,bothXm_mean_Z])
+ggplot(bothXm_mZ, aes(x = bothXm_mean_Z, y = bothXm_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+cor.test(bothXf_dim_sc, bothXf_mZ[,bothXf_mean_Z])
+ggplot(bothXf_mZ, aes(x = bothXf_mean_Z, y = bothXf_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+###find cor between the 4 priority dimensions
+dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim)
+rcorr(dims_merged)
+
