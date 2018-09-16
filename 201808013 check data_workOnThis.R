@@ -8,8 +8,8 @@ library(Hmisc)
 
 
 # Open data ----
-#setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
-setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
+setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
+#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -227,7 +227,7 @@ stimuli[,"stimulus":=NULL]
  # geom_smooth(method='lm')
 
 
-cor.test(stimuli$mean_BT, stimuli$Valence)
+#cor.test(stimuli$mean_BT, stimuli$Valence)
 
 
 #merge female and male stimuli to one df
