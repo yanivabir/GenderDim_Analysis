@@ -8,8 +8,8 @@ library(Hmisc)
 
 
 # Open data ----
-setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
-#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
+#setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
+setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
@@ -98,6 +98,7 @@ dems$politics_z_avg <- dems[, .((z_iraq + z_gays + z_guns + z_stemcells + z_abor
                                          z_affirmative_action + z_death_penalty + z_environment) / 8)]
 
 summary(dems)
+sd(dems$age, na.rm = TRUE) #age sd
 
 ggplot(dems, aes(x = age)) +
   geom_histogram(bins = 15)
@@ -127,6 +128,7 @@ ggplot(brms, aes(x = rt)) +
 
 brms[, zrt := scale(rt), by = uniqueid]  #ask yaniv: should i scale again after removing extreme z scores?
 brms <- brms[abs(zrt) < 3]
+#brms[, zrt := scale(rt), by = uniqueid] #another scale after removal- not used in this exp.
 
 ggplot(brms, aes(x = rt)) +
   geom_histogram(bins = 50) +
@@ -142,7 +144,8 @@ mBT <- merge(mBT, dems)
 
 ggplot(mBT, aes(x = age, y = BT)) +
   geom_point() +
-  geom_smooth(method='lm')
+  geom_smooth(method='lm')+
+  labs(x = "participant age", y = "average BT")
 
   cor.test(mBT$BT, mBT$age)
 
@@ -165,7 +168,7 @@ ggplot(mBT[, .(BT = mean(BT),
                se = sd(BT) / sqrt(.N)), 
            by = gender], aes(x = gender, y = BT, ymin = BT - se, ymax = BT + se)) +
   geom_pointrange(size = 1) +
-  labs(title = "title", x = "participants gender", y = "average BT", tag = "a")
+  labs(x = "participants gender", y = "average BT", tag = "a")
 
 t.test(BT ~ gender, mBT)
 
@@ -199,10 +202,20 @@ stimuli$stim_gender <- as.factor(stimuli$stim_gender)
 stimuli$stimulus_id <- as.factor(stimuli$stimulus_id)
 
 #check for global differences between male and female stimuli
+levels(stimuli$stim_gender) <- c(levels(stimuli$stim_gender), "Female", "Male") 
+stimuli$stim_gender[stimuli$stim_gender == "m"] <- "Male"
+stimuli$stim_gender[stimuli$stim_gender == "f"] <- "Female"
+
 ggplot(stimuli[, .(mean_BT = mean(mean_BT),
                se = sd(mean_BT) / sqrt(.N)), 
            by = stim_gender], aes(x = stim_gender, y = mean_BT, ymin = mean_BT - se, ymax = mean_BT + se)) +
-  geom_pointrange()
+  geom_pointrange(size = 1) +
+  labs(x = "stimuli gender", y = "average BT", tag = "b")
+
+stimuli$stim_gender[stimuli$stim_gender == "Male"] <- "m"
+stimuli$stim_gender[stimuli$stim_gender == "Female"] <- "f"
+
+
 
 t.test(mean_BT ~ stim_gender, stimuli)
 
