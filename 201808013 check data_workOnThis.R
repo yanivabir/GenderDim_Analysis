@@ -8,19 +8,20 @@ library(Hmisc)
 
 
 # Open data ----
-#setwd ("C:/Users/user/Desktop/GenderDim_Analysis/Data") #lab pc
-setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis/Data") #laptop
+setwd ("C:/Users/User/Desktop/GenderDim_Analysis/Data") #lab pc
+#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis") #laptop
 dataFrom <- '20180725'
-brms <- fread(paste('../Data/', dataFrom, 'brms.csv', sep= ''))
-quest <- fread(paste('../Data/', dataFrom, 'questionnaire.csv', sep= ''))
-event <- fread(paste('../Data/', dataFrom, 'eventdata.csv', sep= ''))
-jsevent <- fread(paste('../Data/', dataFrom, 'jseventdata.csv', sep= ''))
-facetraits <- fread(paste('../Data/', '300FacesTraitPCs.csv', sep= ''))
+brms <- fread(paste(dataFrom, 'brms.csv', sep= ''))
+quest <- fread(paste(dataFrom, 'questionnaire.csv', sep= ''))
+event <- fread(paste(dataFrom, 'eventdata.csv', sep= ''))
+jsevent <- fread(paste(dataFrom, 'jseventdata.csv', sep= ''))
+facetraits <- fread(paste('300FacesTraitPCs.csv', sep= ''))
 
-female_params <- fread(paste('../Data/', '300female_coord_allparams.csv', sep= ''))
-male_params <- fread(paste('../Data/', '300male_coord_allparams.csv', sep= ''))
-social_dims <- fread(paste('../Data/', 'si-genders.csv', sep= ''))
+female_params <- fread(paste('300female_coord_allparams.csv', sep= ''))
+male_params <- fread(paste('300male_coord_allparams.csv', sep= ''))
+social_dims <- fread(paste('si-genders.csv', sep= ''))
 
+yanivs_dims <- fread(paste('yaniv_dims_priority_trust_dom.csv', sep= ''))
 
 # Prepare data ----
 brms$uniqueid <- factor(brms$uniqueid)
@@ -120,9 +121,9 @@ brms <- brms[rt > 200]
 # Exclude long trials
 brms <- brms[rt < 15000]
 
-ggplot(brms, aes(x = rt)) +
-  geom_histogram(bins = 50) +
-  facet_wrap('uniqueid', scales = 'free_x')
+#ggplot(brms, aes(x = rt)) +
+#  geom_histogram(bins = 50) +
+#  facet_wrap('uniqueid', scales = 'free_x')
 
 # Exclude outlier trials per subject
 
@@ -130,9 +131,9 @@ brms[, zrt := scale(rt), by = uniqueid]  #ask yaniv: should i scale again after 
 brms <- brms[abs(zrt) < 3]
 #brms[, zrt := scale(rt), by = uniqueid] #another scale after removal- not used in this exp.
 
-ggplot(brms, aes(x = rt)) +
-  geom_histogram(bins = 50) +
-  facet_wrap('uniqueid', scales = 'free_x')
+#ggplot(brms, aes(x = rt)) +
+#  geom_histogram(bins = 50) +
+#  facet_wrap('uniqueid', scales = 'free_x')
 
 # Plot BTs ----
 
@@ -519,7 +520,195 @@ ggplot(bothXf_mZ, aes(x = bothXf_mean_Z, y = bothXf_dim_sc)) +
   geom_point() +
   geom_smooth(method='lm')
 
-###find cor between the 4 priority dimensions
-dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim)
-rcorr(dims_merged)
 
+###check dimensions correlations----
+yanivs_priority <- as.matrix(yanivs_dims[,2])
+yanivs_trust <- as.matrix(yanivs_dims[,3])
+yanivs_dom <- as.matrix(yanivs_dims[,4])
+
+###find cor between the 4 priority dimensions + yanivs dimension
+priority_dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim, bothXm_dim, yanivs_priority)
+colnames(priority_dims_merged) <- c('fXf','fXm', 'mXf', 'mXm','bothXm', 'yaniv')
+rcorr(priority_dims_merged)
+
+###find cor between the different social dimensions + yanivs
+doms_merged <- cbind(as.numeric(dom_fXf),as.numeric(dom_fXm), as.numeric(dom_mXf), as.numeric(dom_mXm), as.numeric(dom_bothXm), yanivs_dom)
+colnames(doms_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv')
+rcorr(doms_merged)
+
+trusts_merged <- cbind(as.numeric(trust_fXf),as.numeric(trust_fXm), as.numeric(trust_mXf),as.numeric(trust_mXm), as.numeric(trust_bothXm), yanivs_trust)
+colnames(trusts_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv')
+rcorr(trusts_merged)
+
+###find cor between yaniv priority dimension and my dominance and trustworthiness dimensions
+temp1 <- cor.test(as.numeric( dom_fXm), (yanivs_priority))
+temp2 <- cor.test(as.numeric( trust_fXm), (yanivs_priority))
+temp3 <- cor.test(as.numeric( dom_fXf), (yanivs_priority))
+temp4 <- cor.test(as.numeric( trust_fXf), (yanivs_priority))
+temp5 <- cor.test(as.numeric( dom_mXm), (yanivs_priority))
+temp6 <- cor.test(as.numeric( trust_mXm), (yanivs_priority))
+temp7 <- cor.test(as.numeric( dom_mXf), (yanivs_priority))
+temp8 <- cor.test(as.numeric( trust_mXf), (yanivs_priority))
+
+yaniv_w_yuval_socials <- data.table(
+  'social Dimension' = c('dominance', 'trust'),
+  fxm = c(temp1$estimate,temp2$estimate),
+  fxf = c(temp3$estimate,temp4$estimate),
+  mxm = c(temp5$estimate,temp6$estimate),
+  mxf = c(temp7$estimate,temp8$estimate)
+
+)
+yaniv_w_yuval_socials
+
+###find cor between yuval priority dimension and yanivs dominance and trustworthiness dimensions
+temp1 <- cor.test(as.numeric( fXm_dim), (yanivs_dom))
+temp2 <- cor.test(as.numeric( fXm_dim), (yanivs_trust))
+temp3 <- cor.test(as.numeric( fXf_dim), (yanivs_dom))
+temp4 <- cor.test(as.numeric( fXf_dim), (yanivs_trust))
+temp5 <- cor.test(as.numeric( mXm_dim), (yanivs_dom))
+temp6 <- cor.test(as.numeric( mXm_dim), (yanivs_trust))
+temp7 <- cor.test(as.numeric( mXf_dim), (yanivs_dom))
+temp8 <- cor.test(as.numeric( mXf_dim), (yanivs_trust))
+
+yuval_w_yaniv_socials <- data.table(
+  'social Dimension' = c('dominance', 'trust'),
+  fxm = c(temp1$estimate,temp2$estimate),
+  fxf = c(temp3$estimate,temp4$estimate),
+  mxm = c(temp5$estimate,temp6$estimate),
+  mxf = c(temp7$estimate,temp8$estimate)
+  
+)
+yuval_w_yaniv_socials
+
+
+### Load required libraries
+#library(reshape)
+library(psych)
+#library(plyr)
+#library(ggplot2)
+#library(ggm)
+
+### Create correlation table
+ct.priority_dims_merged <- corr.test(priority_dims_merged)
+
+### Plot priority heatmap
+# Convert to long format
+heatmap <- data.frame(ct.priority_dims_merged$r)
+heatmap$name <- rownames(heatmap)
+heatmap <- melt(heatmap, id.vars = 'name')
+heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
+                                                    'mXm', 'bothXm', 'yaniv')))
+
+# Round r values to 2 digits
+heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
+
+# Plot
+(p <- ggplot(heatmap, aes(x=variable, y=name))) +
+  geom_tile(aes(fill=-value)) + geom_text(aes(label = label)) +
+  scale_x_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0), position = "top") +
+  scale_y_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0)) + theme(axis.ticks = element_blank(), 
+                                            axis.text	= element_text(size=12),
+                                            axis.text.x = element_text(angle = 45, hjust = 0)) +
+  scale_fill_distiller("",palette = "RdYlBu", limits = c(-1,1)) +
+  ggtitle("priority dimensions correlations")
+
+
+
+
+### Create correlation table
+ct.doms_merged <- corr.test(doms_merged)
+
+### Plot dominance heatmap
+# Convert to long format
+heatmap <- data.frame(ct.doms_merged$r)
+heatmap$name <- rownames(heatmap)
+heatmap <- melt(heatmap, id.vars = 'name')
+heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
+                                                    'mXm', 'bothXm', 'yaniv')))
+
+# Round r values to 2 digits
+heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
+
+# Plot
+(p <- ggplot(heatmap, aes(x=variable, y=name))) +
+  geom_tile(aes(fill=-value)) + geom_text(aes(label = label)) +
+  scale_x_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0), position = "top") +
+  scale_y_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0)) + theme(axis.ticks = element_blank(), 
+                                            axis.text	= element_text(size=12),
+                                            axis.text.x = element_text(angle = 45, hjust = 0)) +
+  scale_fill_distiller("",palette = "RdYlBu", limits = c(-1,1), direction = -1) +
+  ggtitle("power/dominance dimensions correlations")
+
+
+### Create correlation table
+ct.trusts_merged <- corr.test(trusts_merged)
+
+### Plot trust heatmap
+# Convert to long format
+heatmap <- data.frame(ct.trusts_merged$r)
+heatmap$name <- rownames(heatmap)
+heatmap <- melt(heatmap, id.vars = 'name')
+heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
+                                                    'mXm', 'bothXm', 'yaniv')))
+
+# Round r values to 2 digits
+heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
+
+# Plot
+(p <- ggplot(heatmap, aes(x=variable, y=name))) +
+  geom_tile(aes(fill=-value)) + geom_text(aes(label = label)) +
+  scale_x_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0), position = "top") +
+  scale_y_discrete('', labels=c('fXf' = 'fXf',
+                                'fXm' = 'fXm',
+                                'mXf' = 'mXf',
+                                'mXm' = 'mXm',
+                                'bothXm' = 'bothXm',
+                                'yaniv' = 'Yaniv'),
+                   expand = c(0,0)) + theme(axis.ticks = element_blank(), 
+                                            axis.text	= element_text(size=12),
+                                            axis.text.x = element_text(angle = 45, hjust = 0)) +
+  scale_fill_distiller("",palette = "RdYlBu", limits = c(-1,1), direction = -1) +
+  ggtitle("valence/trustworthiness dimensions correlations")
+
+
+
+
+#
+cor.test(as.numeric( dom_fXm), (yanivs_priority))
+cor.test(as.numeric( trust_fXm), (yanivs_priority))
+cor.test(as.numeric( dom_fXf), (fXf_dim))
+cor.test(as.numeric( trust_fXf), (fXf_dim))
+cor.test(as.numeric( dom_mXm), (mXm_dim))
+cor.test(as.numeric( trust_mXm), (mXm_dim))
+cor.test(as.numeric( dom_mXf), (mXf_dim))
+cor.test(as.numeric( trust_mXf), (mXf_dim))
