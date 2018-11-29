@@ -21,7 +21,10 @@ female_params <- fread(paste('300female_coord_allparams.csv', sep= ''))
 male_params <- fread(paste('300male_coord_allparams.csv', sep= ''))
 social_dims <- fread(paste('si-genders.csv', sep= ''))
 
+yanivs_face_params <- fread(paste('oosterhof_todorov_300_faces_component_values.csv', sep= ''))
+yanivs_face_params <- yanivs_face_params[,1:50]
 yanivs_dims <- fread(paste('yaniv_dims_priority_trust_dom.csv', sep= ''))
+yanivs_raw_dims <- fread(paste('yanivs_raw_social_dims.csv', sep= ''))
 
 # Prepare data ----
 brms$uniqueid <- factor(brms$uniqueid)
@@ -408,7 +411,7 @@ female_params <- female_params[2:301,2:51]
 male_params <- male_params[2:301,2:51]
 
 ### Define dimension extraction procedure as a function
-extractDimension <- function(x, faces = faces, result = "dimension") {
+extractDimension <- function(x, faces = faces, score_faces = score_faces, result = "dimension") {
   
   completeVector <- complete.cases(x)
   faces <- faces[completeVector]
@@ -443,6 +446,7 @@ mXm_dim_sc <- extractDimension(stimuli[,mXm_mean_Z], male_params, result = "scor
 mXf_dim_sc <- extractDimension(stimuli[,mXf_mean_Z], female_params, result = "scores")
 bothXm_dim_sc <- extractDimension(stimuli[,mean_Z.M], male_params, result = "scores")
 bothXf_dim_sc <- extractDimension(stimuli[,mean_Z.F], female_params, result = "scores")
+
 
 ### check correlation with dimensions
 
@@ -525,6 +529,31 @@ ggplot(bothXf_mZ, aes(x = bothXf_mean_Z, y = bothXf_dim_sc)) +
 yanivs_priority <- as.matrix(yanivs_dims[,2])
 yanivs_trust <- as.matrix(yanivs_dims[,3])
 yanivs_dom <- as.matrix(yanivs_dims[,4])
+yanivs_raw_trust <- as.matrix(yanivs_raw_dims[,2])
+yanivs_raw_dom <- as.matrix(yanivs_raw_dims[,3])
+
+###check how yanivs priority dimension explaines scores in each group
+yaniv_fXm_dim_sc <- extractDimension(stimuli[,fXm_mean_Z], faces = yanivs_face_params, male_params, result = "scores")
+yaniv_mXm_dim_sc <- extractDimension(stimuli[,mXm_mean_Z], faces = yanivs_face_params, male_params, result = "scores")
+yaniv_fXf_dim_sc <- extractDimension(stimuli[,fXf_mean_Z], faces = yanivs_face_params, female_params, result = "scores")
+yaniv_mXf_dim_sc <- extractDimension(stimuli[,mXf_mean_Z], faces = yanivs_face_params, female_params, result = "scores")
+
+cor.test(yaniv_fXm_dim_sc, fXm_mZ[,fXm_mean_Z])
+ggplot(fXm_mZ, aes(x = fXm_mean_Z, y = yaniv_fXm_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+cor.test(yaniv_mXm_dim_sc, mXm_mZ[,mXm_mean_Z])
+ggplot(mXm_mZ, aes(x = mXm_mean_Z, y = yaniv_mXm_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+cor.test(yaniv_fXf_dim_sc, fXf_mZ[,fXf_mean_Z])
+ggplot(fXf_mZ, aes(x = fXf_mean_Z, y = yaniv_fXf_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
+cor.test(yaniv_mXf_dim_sc, mXf_mZ[,mXf_mean_Z])
+ggplot(mXf_mZ, aes(x = mXf_mean_Z, y = yaniv_mXf_dim_sc)) +
+  geom_point() +
+  geom_smooth(method='lm')
 
 ###find cor between the 4 priority dimensions + yanivs dimension
 priority_dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim, bothXm_dim, yanivs_priority)
@@ -532,12 +561,12 @@ colnames(priority_dims_merged) <- c('fXf','fXm', 'mXf', 'mXm','bothXm', 'yaniv')
 rcorr(priority_dims_merged)
 
 ###find cor between the different social dimensions + yanivs
-doms_merged <- cbind(as.numeric(dom_fXf),as.numeric(dom_fXm), as.numeric(dom_mXf), as.numeric(dom_mXm), as.numeric(dom_bothXm), yanivs_dom)
-colnames(doms_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv')
+doms_merged <- cbind(as.numeric(dom_fXf),as.numeric(dom_fXm), as.numeric(dom_mXf), as.numeric(dom_mXm), as.numeric(dom_bothXm), yanivs_dom, yanivs_raw_dom)
+colnames(doms_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv', 'yaniv raw')
 rcorr(doms_merged)
 
-trusts_merged <- cbind(as.numeric(trust_fXf),as.numeric(trust_fXm), as.numeric(trust_mXf),as.numeric(trust_mXm), as.numeric(trust_bothXm), yanivs_trust)
-colnames(trusts_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv')
+trusts_merged <- cbind(as.numeric(trust_fXf),as.numeric(trust_fXm), as.numeric(trust_mXf),as.numeric(trust_mXm), as.numeric(trust_bothXm), yanivs_trust, yanivs_raw_trust)
+colnames(trusts_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv', 'yaniv raw')
 rcorr(trusts_merged)
 
 ###find cor between yaniv priority dimension and my dominance and trustworthiness dimensions
@@ -580,6 +609,25 @@ yuval_w_yaniv_socials <- data.table(
 )
 yuval_w_yaniv_socials
 
+###find cor between yuval priority dimension and yanivs raw dominance and trustworthiness dimensions
+temp1 <- cor.test(as.numeric( fXm_dim), (yanivs_raw_dom))
+temp2 <- cor.test(as.numeric( fXm_dim), (yanivs_raw_trust))
+temp3 <- cor.test(as.numeric( fXf_dim), (yanivs_raw_dom))
+temp4 <- cor.test(as.numeric( fXf_dim), (yanivs_raw_trust))
+temp5 <- cor.test(as.numeric( mXm_dim), (yanivs_raw_dom))
+temp6 <- cor.test(as.numeric( mXm_dim), (yanivs_raw_trust))
+temp7 <- cor.test(as.numeric( mXf_dim), (yanivs_raw_dom))
+temp8 <- cor.test(as.numeric( mXf_dim), (yanivs_raw_trust))
+
+yuval_w_yaniv_raw_socials <- data.table(
+  'social Dimension' = c('dominance', 'trust'),
+  fxm = c(temp1$estimate,temp2$estimate),
+  fxf = c(temp3$estimate,temp4$estimate),
+  mxm = c(temp5$estimate,temp6$estimate),
+  mxf = c(temp7$estimate,temp8$estimate)
+  
+)
+yuval_w_yaniv_raw_socials
 
 ### Load required libraries
 #library(reshape)
@@ -636,7 +684,7 @@ heatmap <- data.frame(ct.doms_merged$r)
 heatmap$name <- rownames(heatmap)
 heatmap <- melt(heatmap, id.vars = 'name')
 heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
-                                                    'mXm', 'bothXm', 'yaniv')))
+                                                    'mXm', 'bothXm', 'yaniv', 'yaniv raw')))
 
 # Round r values to 2 digits
 heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
@@ -649,14 +697,16 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
-                                'yaniv' = 'Yaniv'),
+                                'yaniv' = 'Yaniv',
+                                'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0), position = "top") +
   scale_y_discrete('', labels=c('fXf' = 'fXf',
                                 'fXm' = 'fXm',
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
-                                'yaniv' = 'Yaniv'),
+                                'yaniv' = 'Yaniv',
+                                'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0)) + theme(axis.ticks = element_blank(), 
                                             axis.text	= element_text(size=12),
                                             axis.text.x = element_text(angle = 45, hjust = 0)) +
@@ -673,7 +723,7 @@ heatmap <- data.frame(ct.trusts_merged$r)
 heatmap$name <- rownames(heatmap)
 heatmap <- melt(heatmap, id.vars = 'name')
 heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
-                                                    'mXm', 'bothXm', 'yaniv')))
+                                                    'mXm', 'bothXm', 'yaniv', 'yaniv raw')))
 
 # Round r values to 2 digits
 heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
@@ -686,14 +736,16 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
-                                'yaniv' = 'Yaniv'),
+                                'yaniv' = 'Yaniv',
+                                'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0), position = "top") +
   scale_y_discrete('', labels=c('fXf' = 'fXf',
                                 'fXm' = 'fXm',
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
-                                'yaniv' = 'Yaniv'),
+                                'yaniv' = 'Yaniv',
+                                'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0)) + theme(axis.ticks = element_blank(), 
                                             axis.text	= element_text(size=12),
                                             axis.text.x = element_text(angle = 45, hjust = 0)) +
