@@ -8,8 +8,8 @@ library(Hmisc)
 
 
 # Open data ----
-setwd ("C:/Users/User/Desktop/GenderDim_Analysis/Data") #lab pc
-#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis") #laptop
+#setwd ("C:/Users/User/Desktop/GenderDim_Analysis/Data") #lab pc
+setwd ("C:\\Users\\yuval\\Desktop\\lab\\Data\\Data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste(dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste(dataFrom, 'questionnaire.csv', sep= ''))
