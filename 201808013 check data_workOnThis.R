@@ -9,13 +9,12 @@ library(Hmisc)
 
 # Open data ----
 setwd ("C:/Users/User/Desktop/GenderDim_Analysis/Data") #lab pc
-#setwd ("C:/Users/yuval/Desktop/GenderDim_Analysis") #laptop
+#setwd ("C:/Users/yuval/Desktop/lab/data/data") #laptop
 dataFrom <- '20180725'
 brms <- fread(paste(dataFrom, 'brms.csv', sep= ''))
 quest <- fread(paste(dataFrom, 'questionnaire.csv', sep= ''))
 event <- fread(paste(dataFrom, 'eventdata.csv', sep= ''))
 jsevent <- fread(paste(dataFrom, 'jseventdata.csv', sep= ''))
-facetraits <- fread(paste('300FacesTraitPCs.csv', sep= ''))
 
 female_params <- fread(paste('300female_coord_allparams.csv', sep= ''))
 male_params <- fread(paste('300male_coord_allparams.csv', sep= ''))
@@ -219,17 +218,8 @@ ggplot(stimuli[, .(mean_BT = mean(mean_BT),
 stimuli$stim_gender[stimuli$stim_gender == "Male"] <- "m"
 stimuli$stim_gender[stimuli$stim_gender == "Female"] <- "f"
 
-
-
 t.test(mean_BT ~ stim_gender, stimuli)
 
-#face traits
-facetraits <- facetraits[,.(stimulus_id = substring(Stimulus, 1,4), Valence, Power, stim_gender)]  #**change when new data arrives
-facetraits$stim_gender <- as.factor(facetraits$stim_gender)
-facetraits$stimulus_id <- as.factor(facetraits$stimulus_id)
-
-stimuli <- merge(stimuli, facetraits, by = c("stimulus_id", "stim_gender"), all.x = TRUE)
-stimuli[,"stimulus":=NULL]
 
 #global correlation between BT and dominance/trustworthiness
 #ggplot(stimuli, aes(x = Power, y = mean_BT)) +
@@ -556,17 +546,17 @@ ggplot(mXf_mZ, aes(x = mXf_mean_Z, y = yaniv_mXf_dim_sc)) +
   geom_smooth(method='lm')
 
 ###find cor between the 4 priority dimensions + yanivs dimension
-priority_dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim, bothXm_dim, yanivs_priority)
-colnames(priority_dims_merged) <- c('fXf','fXm', 'mXf', 'mXm','bothXm', 'yaniv')
+priority_dims_merged <- cbind(fXf_dim, fXm_dim, mXf_dim, mXm_dim, bothXm_dim, bothXf_dim, yanivs_priority)
+colnames(priority_dims_merged) <- c('fXf','fXm', 'mXf', 'mXm','bothXm', 'bothXf', 'yaniv')
 rcorr(priority_dims_merged)
 
 ###find cor between the different social dimensions + yanivs
-doms_merged <- cbind(as.numeric(dom_fXf),as.numeric(dom_fXm), as.numeric(dom_mXf), as.numeric(dom_mXm), as.numeric(dom_bothXm), yanivs_dom, yanivs_raw_dom)
-colnames(doms_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv', 'yaniv raw')
+doms_merged <- cbind(as.numeric(dom_fXf),as.numeric(dom_fXm), as.numeric(dom_mXf), as.numeric(dom_mXm), as.numeric(dom_bothXm), as.numeric(dom_bothXf), yanivs_dom, yanivs_raw_dom)
+colnames(doms_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'bothXf', 'yaniv', 'yaniv raw')
 rcorr(doms_merged)
 
-trusts_merged <- cbind(as.numeric(trust_fXf),as.numeric(trust_fXm), as.numeric(trust_mXf),as.numeric(trust_mXm), as.numeric(trust_bothXm), yanivs_trust, yanivs_raw_trust)
-colnames(trusts_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'yaniv', 'yaniv raw')
+trusts_merged <- cbind(as.numeric(trust_fXf),as.numeric(trust_fXm), as.numeric(trust_mXf),as.numeric(trust_mXm), as.numeric(trust_bothXm), as.numeric(trust_bothXf), yanivs_trust, yanivs_raw_trust)
+colnames(trusts_merged) <- c('fXf','fXm', 'mXf', 'mXm', 'bothXm', 'bothXf', 'yaniv', 'yaniv raw')
 rcorr(trusts_merged)
 
 ###find cor between yaniv priority dimension and my dominance and trustworthiness dimensions
@@ -645,7 +635,7 @@ heatmap <- data.frame(ct.priority_dims_merged$r)
 heatmap$name <- rownames(heatmap)
 heatmap <- melt(heatmap, id.vars = 'name')
 heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
-                                                    'mXm', 'bothXm', 'yaniv')))
+                                                    'mXm', 'bothXm', 'bothXf', 'yaniv')))
 
 # Round r values to 2 digits
 heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
@@ -658,6 +648,7 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
+                                'bothXf' = 'bothXf',
                                 'yaniv' = 'Yaniv'),
                    expand = c(0,0), position = "top") +
   scale_y_discrete('', labels=c('fXf' = 'fXf',
@@ -665,6 +656,7 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
+                                'bothXf' = 'bothXf',
                                 'yaniv' = 'Yaniv'),
                    expand = c(0,0)) + theme(axis.ticks = element_blank(), 
                                             axis.text	= element_text(size=12),
@@ -684,7 +676,7 @@ heatmap <- data.frame(ct.doms_merged$r)
 heatmap$name <- rownames(heatmap)
 heatmap <- melt(heatmap, id.vars = 'name')
 heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
-                                                    'mXm', 'bothXm', 'yaniv', 'yaniv raw')))
+                                                    'mXm', 'bothXm', 'bothXf', 'yaniv', 'yaniv raw')))
 
 # Round r values to 2 digits
 heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
@@ -723,7 +715,7 @@ heatmap <- data.frame(ct.trusts_merged$r)
 heatmap$name <- rownames(heatmap)
 heatmap <- melt(heatmap, id.vars = 'name')
 heatmap$name <- factor(heatmap$name, levels = rev(c('fXf', 'fXm','mXf',
-                                                    'mXm', 'bothXm', 'yaniv', 'yaniv raw')))
+                                                    'mXm', 'bothXm', 'bothXf', 'yaniv', 'yaniv raw')))
 
 # Round r values to 2 digits
 heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
@@ -736,6 +728,7 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
+                                'bothXf' = 'bothXf',
                                 'yaniv' = 'Yaniv',
                                 'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0), position = "top") +
@@ -744,6 +737,7 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                 'mXf' = 'mXf',
                                 'mXm' = 'mXm',
                                 'bothXm' = 'bothXm',
+                                'bothXf' = 'bothXf',
                                 'yaniv' = 'Yaniv',
                                 'yaniv raw' = 'Yaniv raw'),
                    expand = c(0,0)) + theme(axis.ticks = element_blank(), 
@@ -764,3 +758,4 @@ cor.test(as.numeric( dom_mXm), (mXm_dim))
 cor.test(as.numeric( trust_mXm), (mXm_dim))
 cor.test(as.numeric( dom_mXf), (mXf_dim))
 cor.test(as.numeric( trust_mXf), (mXf_dim))
+

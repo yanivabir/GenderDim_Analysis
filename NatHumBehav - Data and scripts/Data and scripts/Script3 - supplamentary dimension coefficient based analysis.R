@@ -206,3 +206,4 @@ heatmap$label <- sprintf("%0.2f", round(heatmap$value,2))
                                             axis.text	= element_text(size=12),
                                             axis.text.x = element_text(angle = 45, hjust = 0)) +
   scale_fill_distiller("",palette = "RdYlBu", limits = c(-1,1))
+
